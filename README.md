@@ -47,6 +47,8 @@ pipx install brother_ql
 ```
 If needed, add ~/.local/bin to your PATH
 
+You can use : `pipx ensurepath` then restart your terminal
+
 ---
 
 ## 4. Generate a Label Image (29x90 mm pre-cut)
