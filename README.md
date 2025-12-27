@@ -1,6 +1,6 @@
 # Brother QL-800 Installation and Usage on Ubuntu/Linux
 
-This guide explains how to install and use the **Brother QL-800** label printer on Linux (tested on Ubuntu), especially for **pre-cut labels** like **DK-11201 (29x90 mm)** using the `brother_ql` command-line tool (no CUPS required).
+This guide explains how to install and use the **Brother QL-800** label printer on Linux (tested on Ubuntu) using the `brother_ql_inventree` command-line tool (no CUPS required).
 
 ---
 
@@ -43,7 +43,7 @@ Unplug and replug the printer.
 
 ```bash
 sudo apt install pipx
-pipx install brother_ql
+pipx install brother_ql_inventree
 ```
 If needed, add ~/.local/bin to your PATH
 
