@@ -49,7 +49,7 @@ def create_full_inventory_label(uuid, label='leuco.net'):
     image.paste(aztec_img, (aztec_x, aztec_margin))
     
     bw = image.convert('1')
-    filename = f"inventory_full_{uuid}.png"
+    filename = f"output/inventory_full_{uuid}.png"
     bw.save(filename)
     
     return filename
@@ -70,7 +70,7 @@ def create_tiny_inventory_label(uuid):
         x += aztec_w + 10
 
     bw = image.convert('1')
-    filename = f"inventory_tiny_{uuid}.png"
+    filename = f"output/inventory_tiny_{uuid}.png"
     bw.save(filename)
     
     return filename
