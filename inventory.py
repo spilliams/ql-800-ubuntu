@@ -9,6 +9,7 @@ tape_designation = '62'
 tape_width_px = 696 # see https://github.com/matmair/brother_ql-inventree
 
 def create_full_inventory_label(uuid, label='leuco.net'):
+    """Creates an image with the lodestone symbol, some text, and an aztec code of the UUID."""
     height_px = 164
     image = Image.new('RGB', (tape_width_px, height_px), color='white')
     draw = ImageDraw.Draw(image)
@@ -57,8 +58,8 @@ def create_full_inventory_label(uuid, label='leuco.net'):
 # def create_small_inventory_label(uuid)
 
 
-def create_tiny_inventory_label(uuid, label='leuco.net'):
-    # aztec on the right
+def create_tiny_inventory_label(uuid):
+    """Creates an image of lots of copies of the tiniest aztec"""
     aztec.generate(uuid, "aztec.png")
     aztec_img = Image.open("aztec.png", 'r')
     aztec_w, aztec_h = aztec_img.size
@@ -76,6 +77,7 @@ def create_tiny_inventory_label(uuid, label='leuco.net'):
 
 
 def print_label(filename):
+    """Requires a CLI provided by brother-ql-inventree."""
     cmd = [
         'brother_ql', '--backend', 'pyusb',
         '--model', 'QL-800',
