@@ -3,38 +3,49 @@ import subprocess
 from PIL import Image, ImageDraw, ImageFont
 import sys
 
-tape_width_mm = 62
+import aztec
+
+tape_designation = '62'
 tape_width_px = 696 # see https://github.com/matmair/brother_ql-inventree
 
-# def is_numeric(barcode):
-#     """Returns true if the barcode contains only digits"""
-#     return barcode.isdigit()
-
-# def format_barcode_display(barcode_code, is_ean13=False):
-#     if is_ean13 and len(barcode_code) == 13:
-#         return f"{barcode_code[0]} {barcode_code[1:7]} {barcode_code[7:13]}"
-#     return barcode_code
-
-def create_inventory_label(uuid):
+def create_full_inventory_label(uuid, label='leuco.net'):
     height_px = 164
     image = Image.new('RGB', (tape_width_px, height_px), color='white')
     draw = ImageDraw.Draw(image)
 
     # lodestone image on the left
-    lodestone = Image.open('lodestone_160.png', 'r')
-    lodestone_w, lodestone_h = lodestone.size
+    lodestone_img = Image.open('lodestone_160.png', 'r')
+    lodestone_w, lodestone_h = lodestone_img.size
     lodestone_margin = (height_px - lodestone_h) // 2
-    image.paste(lodestone, (lodestone_margin, lodestone_margin))
+    image.paste(lodestone_img, (lodestone_margin, lodestone_margin))
+    lodestone_img.close()
 
     # text in the middle
-    font_size = 60
-    font_medium = ImageFont.truetype("/home/spencer/Downloads/fonts/01_Range_Mono_Complete/01 Range Mono Complete/OTF/RangeMono-Medium.otf", font_size)
-    text_start = 2*lodestone_margin+lodestone_w+15
-    text = f"leuco.net\n{uuid}"
-    bbox = draw.textbbox((0, 0), text, font=font_medium)
-    text_height = bbox[3] - bbox[1]
-    y_centered = (height_px - text_height) // 2
-    draw.multiline_text((text_start, y_centered), text, fill='black', font=font_medium)
+    font_size = 50
+    font_face = ImageFont.truetype("/home/spencer/Downloads/fonts/01_Range_Mono_Complete/01 Range Mono Complete/OTF/RangeMono-Medium.otf", font_size)
+    text = f"{label}\n{uuid}"
+    y_centered = height_px // 2 + 2
+    x_centered = tape_width_px // 2
+    draw.multiline_text(
+        (x_centered, y_centered),
+        text,
+        align='center',
+        anchor='mm',
+        fill='black',
+        font=font_face,
+        spacing=6
+    )
+    
+    # aztec on the right
+    aztec_size = (lodestone_w + lodestone_h) // 2
+    aztec.generate(uuid, "aztec.png")
+    aztec_img = Image.open("aztec.png", 'r')
+    aztec_img = aztec_img.resize((aztec_size, aztec_size))
+    aztec_w, aztec_h = aztec_img.size
+    print(f"aztec w {aztec_w}, h {aztec_h}, size {aztec_size}")
+    aztec_margin = (height_px - aztec_h) // 2
+    aztec_x = tape_width_px - 2*aztec_margin - aztec_w
+    image.paste(aztec_img, (aztec_x, aztec_margin))
     
     bw = image.convert('1')
     filename = f"inventory_{uuid}.png"
@@ -43,70 +54,21 @@ def create_inventory_label(uuid):
     return filename
 
 
-# def create_price_label(product_name, price_euros, barcode_number, footer="", height=300):
-#     
-#     # Barcode drawing
-#     barcode_height = 100
-#     module_width = 3 if not use_ean13 else 5
+def print_label(filename):
+    cmd = [
+        'brother_ql', '--backend', 'pyusb',
+        '--model', 'QL-800',
+        '--printer', 'usb://0x04f9:0x209b',
+        'print', '-l', f'{tape_designation}', filename
+    ]
     
-#     if use_ean13:
-#         # Code-barres EAN-13
-#         actual_barcode_width = 113 * module_width
-#         base_center = (width - actual_barcode_width) // 2
-#         barcode_x = base_center + 35
-#         success = ean13.draw_barcode(draw, barcode_x, current_y, actual_barcode_width, barcode_height, barcode_code, module_width)
-#     else:
-#         # Code-barres Code 128
-#         # Width estimation (11 bits per character + start + checksum + stop)
-#         estimated_width = (len(barcode_code) + 3) * 11 * module_width
-#         barcode_x = (width - estimated_width) // 2
-#         success = code128.draw_barcode(draw, barcode_x, current_y, estimated_width, barcode_height, barcode_code, module_width)
+    result = subprocess.run(cmd, capture_output=True, text=True)
     
-#     if not success:
-#         draw.text((barcode_x, current_y), f"Code: {barcode_code}", fill='black', font=font_small)
-    
-#     current_y += barcode_height + 5
-    
-#     # Barcode display
-#     formatted_barcode = format_barcode_display(barcode_code, use_ean13)
-#     bbox = draw.textbbox((0, 0), formatted_barcode, font=font_small)
-#     text_width = bbox[2] - bbox[0]
-#     x_centered = (width - text_width) // 2
-#     draw.text((x_centered, current_y), formatted_barcode, fill='black', font=font_small)
-#     current_y += 30
-    
-#     # Price
-#     price_text = f"{price_euros:.2f} €"
-#     bbox = draw.textbbox((0, 0), price_text, font=font_price)
-#     text_width = bbox[2] - bbox[0]
-#     x_centered = (width - text_width) // 2
-#     draw.text((x_centered, current_y), price_text, fill='black', font=font_price)
-#     current_y += 50
-    
-#     # Footer
-#     if footer and footer.strip():
-#         bbox = draw.textbbox((0, 0), footer, font=font_website)
-#         text_width = bbox[2] - bbox[0]
-#         x_centered = (width - text_width) // 2
-#         draw.text((x_centered, current_y), footer, fill='black', font=font_website)
-    
-#     # Border
-#     draw.rectangle([2, 2, width-2, height-2], outline='black', width=1)
+    if 'Total:' in result.stderr:
+        return True, "Print successful"
+    else:
+        return False, f"Print error: {result.stderr.strip()}"
 
-# def print_label(filename):
-#     cmd = [
-#         'brother_ql', '--backend', 'pyusb',
-#         '--model', 'QL-800',
-#         '--printer', 'usb://0x04f9:0x209b',
-#         'print', '-l', f'{tape_width_mm}', filename
-#     ]
-    
-#     result = subprocess.run(cmd, capture_output=True, text=True)
-    
-#     if 'Total:' in result.stderr:
-#         return True, "Print successful"
-#     else:
-#         return False, f"Print error: {result.stderr.strip()}"
 
 def main():
     try:
@@ -119,20 +81,21 @@ def main():
             print("Error: UUID must contain only letters and digits", file=sys.stderr)
             sys.exit(1)
         
-        filename = create_inventory_label(uuid)
+        filename = create_full_inventory_label(uuid)
         print(f"saved label as {filename}")
         
-        # success, message = print_label(filename)
-        # if success:
-        #     print(f"✓ {message}")
-        #     sys.exit(0)
-        # else:
-        #     print(f"✗ {message}", file=sys.stderr)
-        #     sys.exit(1)
+        success, message = print_label(filename)
+        if success:
+            print(f"✓ {message}")
+            sys.exit(0)
+        else:
+            print(f"✗ {message}", file=sys.stderr)
+            sys.exit(1)
             
     except Exception as e:
         print(f"Error: {str(e)}", file=sys.stderr)
         sys.exit(1)
+
 
 if __name__ == "__main__":
     main()

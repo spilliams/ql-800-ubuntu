@@ -87,22 +87,3 @@ brother_ql --backend pyusb \
   --printer usb://0x04f9:0x209b \
   print -l 29x90 label.png
 ```
-
-## 6. Print barcode and price
-
-You can download the print.py file and use:
-
-```bash
-python3 print.py 'title' 10 2897495907703 'your footer'
-```
-
-- "title" is a string
-- 10 is the Price in €
-- 2897495907703 is your barcode
-- "your footer" is a string (optional)
-
-The label type you're using is *DK-2205*:
-
-- Format: 62mm wide, continuous (endless)
-- Color: White with black printing only
-- Type: Continuous labels without pre-cuts
