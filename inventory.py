@@ -48,7 +48,28 @@ def create_full_inventory_label(uuid, label='leuco.net'):
     image.paste(aztec_img, (aztec_x, aztec_margin))
     
     bw = image.convert('1')
-    filename = f"inventory_{uuid}.png"
+    filename = f"inventory_full_{uuid}.png"
+    bw.save(filename)
+    
+    return filename
+
+
+# def create_small_inventory_label(uuid)
+
+
+def create_tiny_inventory_label(uuid, label='leuco.net'):
+    # aztec on the right
+    aztec.generate(uuid, "aztec.png")
+    aztec_img = Image.open("aztec.png", 'r')
+    aztec_w, aztec_h = aztec_img.size
+    image = Image.new('RGB', (tape_width_px, aztec_h), color='white')
+    x = aztec_w
+    while x < tape_width_px:
+        image.paste(aztec_img, (x-aztec_w, 0))
+        x += aztec_w + 10
+
+    bw = image.convert('1')
+    filename = f"inventory_tiny_{uuid}.png"
     bw.save(filename)
     
     return filename
@@ -81,7 +102,7 @@ def main():
             print("Error: UUID must contain only letters and digits", file=sys.stderr)
             sys.exit(1)
         
-        filename = create_full_inventory_label(uuid)
+        filename = create_tiny_inventory_label(uuid)
         print(f"saved label as {filename}")
         
         success, message = print_label(filename)
