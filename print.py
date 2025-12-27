@@ -1,227 +1,10 @@
 #!/usr/bin/env python3
 import subprocess
 from PIL import Image, ImageDraw, ImageFont
-import random
 import sys
-import string
 
-def calculate_ean13_checksum(code_12_digits):
-    total = 0
-    for i, digit in enumerate(code_12_digits):
-        if i % 2 == 0:
-            total += int(digit)
-        else:
-            total += int(digit) * 3
-    return str((10 - (total % 10)) % 10)
-
-def generate_internal_ean13():
-    prefix = "2"
-    random_part = "".join([str(random.randint(0, 9)) for _ in range(11)])
-    code_12 = prefix + random_part
-    checksum = calculate_ean13_checksum(code_12)
-    return code_12 + checksum
-
-def generate_internal_code128():
-    """Génère un code-barres Code 128 aléatoire avec des lettres et chiffres"""
-    chars = string.ascii_uppercase + string.digits
-    return "INT" + "".join(random.choices(chars, k=8))
-
-def get_code128_patterns():
-    """Retourne les patterns Code 128"""
-    patterns = {
-        # Code Set A (caractères de contrôle, chiffres, lettres majuscules)
-        'A': {
-            ' ': '11011001100', '!': '11001101100', '"': '11001100110', '#': '10010011000',
-            '$': '10010001100', '%': '10001001100', '&': '10011001000', "'": '10011000100',
-            '(': '10001100100', ')': '11001001000', '*': '11001000100', '+': '11000100100',
-            ',': '10110011100', '-': '10011011100', '.': '10011001110', '/': '10111001100',
-            '0': '10011101100', '1': '10011100110', '2': '11001110010', '3': '11001011100',
-            '4': '11001001110', '5': '11011100100', '6': '11001110100', '7': '11101101110',
-            '8': '11101001100', '9': '11100101100', ':': '11100100110', ';': '11101100100',
-            '<': '11100110100', '=': '11100110010', '>': '11011011000', '?': '11011000110',
-            '@': '11000110110', 'A': '10100011000', 'B': '10001011000', 'C': '10001000110',
-            'D': '10110001000', 'E': '10001101000', 'F': '10001100010', 'G': '11010001000',
-            'H': '11000101000', 'I': '11000100010', 'J': '10110111000', 'K': '10110001110',
-            'L': '10001101110', 'M': '10111011000', 'N': '10111000110', 'O': '10001110110',
-            'P': '11101110110', 'Q': '11010001110', 'R': '11000101110', 'S': '11011101000',
-            'T': '11011100010', 'U': '11011101110', 'V': '11101011000', 'W': '11101000110',
-            'X': '11100010110', 'Y': '11101101000', 'Z': '11101100010'
-        }
-    }
-    
-    # Codes spéciaux
-    start_a = '11010000100'
-    start_b = '11010010000'
-    start_c = '11010011100'
-    stop = '1100011101011'
-    
-    return patterns, start_a, start_b, start_c, stop
-
-def calculate_code128_checksum(data, start_code):
-    """Calcule le checksum pour Code 128"""
-    # Valeurs des caractères pour le checksum
-    char_values = {}
-    
-    # Valeurs pour les caractères ASCII imprimables
-    for i in range(32, 127):
-        char_values[chr(i)] = i - 32
-    
-    # Start codes
-    start_values = {'A': 103, 'B': 104, 'C': 105}
-    
-    checksum = start_values[start_code]
-    
-    for i, char in enumerate(data):
-        if char in char_values:
-            checksum += char_values[char] * (i + 1)
-    
-    return checksum % 103
-
-def get_checksum_pattern(checksum_value):
-    """Retourne le pattern pour la valeur de checksum"""
-    patterns = [
-        '11011001100', '11001101100', '11001100110', '10010011000', '10010001100',
-        '10001001100', '10011001000', '10011000100', '10001100100', '11001001000',
-        '11001000100', '11000100100', '10110011100', '10011011100', '10011001110',
-        '10111001100', '10011101100', '10011100110', '11001110010', '11001011100',
-        '11001001110', '11011100100', '11001110100', '11101101110', '11101001100',
-        '11100101100', '11100100110', '11101100100', '11100110100', '11100110010',
-        '11011011000', '11011000110', '11000110110', '10100011000', '10001011000',
-        '10001000110', '10110001000', '10001101000', '10001100010', '11010001000',
-        '11000101000', '11000100010', '10110111000', '10110001110', '10001101110',
-        '10111011000', '10111000110', '10001110110', '11101110110', '11010001110',
-        '11000101110', '11011101000', '11011100010', '11011101110', '11101011000',
-        '11101000110', '11100010110', '11101101000', '11101100010', '11100011010',
-        '11101111010', '11001000010', '11110001010', '10100110000', '10100001100',
-        '10010110000', '10010000110', '10000101100', '10000100110', '10110010000',
-        '10110000100', '10011010000', '10011000010', '10000110100', '10000110010',
-        '11000010010', '11001010000', '11110111010', '11000010100', '10001111010',
-        '10100111100', '10010111100', '10010011110', '10111100100', '10011110100',
-        '10011110010', '11110100100', '11110010100', '11110010010', '11011011110',
-        '11011110110', '11110110110', '10101111000', '10100011110', '10001011110',
-        '10111101000', '10111100010', '11110101000', '11110100010', '10111011110',
-        '10111101110', '11101011110', '11110101110', '11010000100', '11010010000',
-        '11010011100', '1100011101011'
-    ]
-    
-    if 0 <= checksum_value < len(patterns):
-        return patterns[checksum_value]
-    return patterns[0]
-
-def draw_code128_barcode(draw, x, y, width, height, data, module_width):
-    """Dessine un code-barres Code 128"""
-    patterns, start_a, start_b, start_c, stop = get_code128_patterns()
-    
-    # Utilise le Code Set A pour supporter les lettres majuscules et chiffres
-    current_x = x
-    
-    # Start code A
-    for bit in start_a:
-        if bit == '1':
-            draw.rectangle([current_x, y, current_x + module_width, y + height], fill='black')
-        current_x += module_width
-    
-    # Données
-    for char in data:
-        if char in patterns['A']:
-            pattern = patterns['A'][char]
-            for bit in pattern:
-                if bit == '1':
-                    draw.rectangle([current_x, y, current_x + module_width, y + height], fill='black')
-                current_x += module_width
-        else:
-            # Si le caractère n'est pas supporté, le remplacer par un espace
-            pattern = patterns['A'][' ']
-            for bit in pattern:
-                if bit == '1':
-                    draw.rectangle([current_x, y, current_x + module_width, y + height], fill='black')
-                current_x += module_width
-    
-    # Checksum
-    checksum_value = calculate_code128_checksum(data, 'A')
-    checksum_pattern = get_checksum_pattern(checksum_value)
-    for bit in checksum_pattern:
-        if bit == '1':
-            draw.rectangle([current_x, y, current_x + module_width, y + height], fill='black')
-        current_x += module_width
-    
-    # Stop code
-    for bit in stop:
-        if bit == '1':
-            draw.rectangle([current_x, y, current_x + module_width, y + height], fill='black')
-        current_x += module_width
-    
-    return True
-
-def draw_ean13_barcode(draw, x, y, width, height, ean13_code, module_width):
-    """Dessine un code-barres EAN-13 (code original conservé)"""
-    patterns = {
-        'A': {
-            '0': '0001101', '1': '0011001', '2': '0010011', '3': '0111101',
-            '4': '0100011', '5': '0110001', '6': '0101111', '7': '0111011',
-            '8': '0110111', '9': '0001011'
-        },
-        'B': {
-            '0': '0100111', '1': '0110011', '2': '0011011', '3': '0100001',
-            '4': '0011101', '5': '0111001', '6': '0000101', '7': '0010001',
-            '8': '0001001', '9': '0010111'
-        },
-        'C': {
-            '0': '1110010', '1': '1100110', '2': '1101100', '3': '1000010',
-            '4': '1011100', '5': '1001110', '6': '1010000', '7': '1000100',
-            '8': '1001000', '9': '1110100'
-        }
-    }
-    
-    first_digit_patterns = {
-        '0': 'AAAAAA', '1': 'AABABB', '2': 'AABBAB', '3': 'AABBBA',
-        '4': 'ABAABB', '5': 'ABBAAB', '6': 'ABBBAA', '7': 'ABABAB',
-        '8': 'ABABBA', '9': 'ABBABA'
-    }
-    
-    if len(ean13_code) != 13:
-        return False
-    
-    first_digit = ean13_code[0]
-    left_digits = ean13_code[1:7]
-    right_digits = ean13_code[7:13]
-    pattern_sequence = first_digit_patterns[first_digit]
-    
-    current_x = x
-    
-    for bit in '101':
-        if bit == '1':
-            draw.rectangle([current_x, y, current_x + module_width, y + height], fill='black')
-        current_x += module_width
-    
-    for i, digit in enumerate(left_digits):
-        pattern_type = pattern_sequence[i]
-        bit_pattern = patterns[pattern_type][digit]
-        
-        for bit in bit_pattern:
-            if bit == '1':
-                draw.rectangle([current_x, y, current_x + module_width, y + height], fill='black')
-            current_x += module_width
-    
-    for bit in '01010':
-        if bit == '1':
-            draw.rectangle([current_x, y, current_x + module_width, y + height], fill='black')
-        current_x += module_width
-    
-    for digit in right_digits:
-        bit_pattern = patterns['C'][digit]
-        
-        for bit in bit_pattern:
-            if bit == '1':
-                draw.rectangle([current_x, y, current_x + module_width, y + height], fill='black')
-            current_x += module_width
-    
-    for bit in '101':
-        if bit == '1':
-            draw.rectangle([current_x, y, current_x + module_width, y + height], fill='black')
-        current_x += module_width
-    
-    return True
+import code128
+import ean13
 
 def is_numeric(barcode):
     """Vérifie si le code-barres ne contient que des chiffres"""
@@ -241,13 +24,13 @@ def create_price_label(product_name, price_euros, barcode_number, footer="", hei
     
     if barcode_number is None or barcode_number == "":
         # Génère un code aléatoire basé sur le type demandé
-        barcode_code = generate_internal_code128()
+        barcode_code = code128.generate_internal()
         use_ean13 = False
     else:
         if is_numeric(barcode_number):
             # Code numérique - utilise EAN-13 si possible
             if len(barcode_number) == 12:
-                barcode_code = barcode_number + calculate_ean13_checksum(barcode_number)
+                barcode_code = barcode_number + ean13.calculate_checksum(barcode_number)
                 use_ean13 = True
             elif len(barcode_number) == 13:
                 barcode_code = barcode_number
@@ -323,13 +106,13 @@ def create_price_label(product_name, price_euros, barcode_number, footer="", hei
         actual_barcode_width = 113 * module_width
         base_center = (width - actual_barcode_width) // 2
         barcode_x = base_center + 35
-        success = draw_ean13_barcode(draw, barcode_x, current_y, actual_barcode_width, barcode_height, barcode_code, module_width)
+        success = ean13.draw_barcode(draw, barcode_x, current_y, actual_barcode_width, barcode_height, barcode_code, module_width)
     else:
         # Code-barres Code 128
         # Estimation de la largeur (11 bits par caractère + start + checksum + stop)
         estimated_width = (len(barcode_code) + 3) * 11 * module_width
         barcode_x = (width - estimated_width) // 2
-        success = draw_code128_barcode(draw, barcode_x, current_y, estimated_width, barcode_height, barcode_code, module_width)
+        success = code128.draw_barcode(draw, barcode_x, current_y, estimated_width, barcode_height, barcode_code, module_width)
     
     if not success:
         draw.text((barcode_x, current_y), f"Code: {barcode_code}", fill='black', font=font_small)
