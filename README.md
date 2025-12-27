@@ -9,8 +9,9 @@ This guide explains how to install and use the **Brother QL-800** label printer 
 By default, the QL-800 can act as a USB drive instead of a printer (Editor Lite mode).
 
 If the "Editor Lite" LED lights up:
-   - **Hold the button** on the printer until the LED turns off.
-   - This switches it to **printer mode** (real USB printer).
+
+- **Hold the button** on the printer until the LED turns off.
+- This switches it to **printer mode** (real USB printer).
 
 ---
 
@@ -45,15 +46,16 @@ Unplug and replug the printer.
 sudo apt install pipx
 pipx install brother_ql_inventree
 ```
+
 If needed, add ~/.local/bin to your PATH
 
-You can use : `pipx ensurepath` then restart your terminal
+You can use `pipx ensurepath` then restart your terminal
 
 ---
 
 ## 4. Generate a Label Image (29x90 mm pre-cut)
-Example Python script using Pillow:
 
+Example Python script using Pillow:
 
 ```py
 from PIL import Image, ImageDraw, ImageFont
@@ -78,6 +80,7 @@ bw.save("label.png")
 ---
 
 ## 5. Print the label
+
 ```bash
 brother_ql --backend pyusb \
   --model QL-800 \
@@ -87,10 +90,12 @@ brother_ql --backend pyusb \
 
 ## 6. Print barcode and price
 
-You can download the print.py file and use : 
+You can download the print.py file and use:
+
 ```bash
 python3 print.py 'title' 10 2897495907703 'your footer'
 ```
+
 - "title" is a string
 - 10 is the Price in €
 - 2897495907703 is your barcode
