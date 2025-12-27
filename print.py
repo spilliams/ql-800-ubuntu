@@ -7,11 +7,10 @@ import code128
 import ean13
 
 def is_numeric(barcode):
-    """Vérifie si le code-barres ne contient que des chiffres"""
+    """Returns true if the barcode contains only digits"""
     return barcode.isdigit()
 
 def format_barcode_display(barcode_code, is_ean13=False):
-    """Formate l'affichage du code-barres"""
     if is_ean13 and len(barcode_code) == 13:
         return f"{barcode_code[0]} {barcode_code[1:7]} {barcode_code[7:13]}"
     return barcode_code
