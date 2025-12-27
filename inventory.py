@@ -3,9 +3,6 @@ import subprocess
 from PIL import Image, ImageDraw, ImageFont
 import sys
 
-# import code128
-# import ean13
-
 tape_width_mm = 62
 tape_width_px = 696 # see https://github.com/matmair/brother_ql-inventree
 
@@ -19,39 +16,26 @@ tape_width_px = 696 # see https://github.com/matmair/brother_ql-inventree
 #     return barcode_code
 
 def create_inventory_label(uuid):
-    height_px = 165
+    height_px = 164
     image = Image.new('RGB', (tape_width_px, height_px), color='white')
     draw = ImageDraw.Draw(image)
-    
-    font_size = 44
-    # unicode_font = ImageFont.truetype("/usr/share/fonts/truetype/ubuntu/UbuntuSans.ttf", font_size)
-    unicode_font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", font_size)
-    font_medium = ImageFont.truetype("/home/spencer/Downloads/fonts/01_Range_Mono_Complete/01 Range Mono Complete/OTF/RangeMono-Medium.otf", font_size)
-    # font_medium = ImageFont.truetype("/home/spencer/Downloads/fonts/GortonPerfected-Medium.otf", 44)
-    
-    text_x_min = 170
-    x = text_x_min
-    y = 0
-    
-    lodestone = u"\uD83D"
-    # lodestone = u"\uDF53"
-    # lodestone = u"\U0001F753"
-    # lodestone = "🝓"
-    bbox = draw.textbbox((x, y), lodestone, font=unicode_font)
-    text_width = bbox[2] - bbox[0]
-    draw.text((x, y), lodestone, fill='black', font=unicode_font)
-    x += text_width
-    
-    bbox = draw.textbbox((x, y), " leuco.net", font=font_medium)
-    # text_width = bbox[2] - bbox[0]
-    text_height = bbox[3] - bbox[1]
-    draw.multiline_text((x, y), " leuco.net", fill='black', font=font_medium)
-    x = text_x_min
-    y += text_height + 12
-    
-    bbox = draw.textbbox((x, y), uuid, font=font_medium)
-    draw.text((x, y), uuid, fill='black', font=font_medium)
 
+    # lodestone image on the left
+    lodestone = Image.open('lodestone_160.png', 'r')
+    lodestone_w, lodestone_h = lodestone.size
+    lodestone_margin = (height_px - lodestone_h) // 2
+    image.paste(lodestone, (lodestone_margin, lodestone_margin))
+
+    # text in the middle
+    font_size = 60
+    font_medium = ImageFont.truetype("/home/spencer/Downloads/fonts/01_Range_Mono_Complete/01 Range Mono Complete/OTF/RangeMono-Medium.otf", font_size)
+    text_start = 2*lodestone_margin+lodestone_w+15
+    text = f"leuco.net\n{uuid}"
+    bbox = draw.textbbox((0, 0), text, font=font_medium)
+    text_height = bbox[3] - bbox[1]
+    y_centered = (height_px - text_height) // 2
+    draw.multiline_text((text_start, y_centered), text, fill='black', font=font_medium)
+    
     bw = image.convert('1')
     filename = f"inventory_{uuid}.png"
     bw.save(filename)
@@ -60,35 +44,7 @@ def create_inventory_label(uuid):
 
 
 # def create_price_label(product_name, price_euros, barcode_number, footer="", height=300):
-#     try:
-#         font_large = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", 32)
-#         
-#         font_small = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", 20)
-#         font_price = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", 40)
-#         font_website = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", 22)
-#     except:
-#         font_large = ImageFont.load_default()
-#         font_medium = ImageFont.load_default()
-#         font_small = ImageFont.load_default()
-#         font_price = ImageFont.load_default()
-#         font_website = ImageFont.load_default()
-    
-#     margin = 12
-#     current_y = margin
-    
-#     # Traitement du nom du produit
-#     max_chars_per_line = 32
-#     lines = []
-    
-#     for line in lines:
-#         bbox = draw.textbbox((0, 0), line, font=font_medium)
-#         text_width = bbox[2] - bbox[0]
-#         x_centered = (width - text_width) // 2
-#         draw.text((x_centered, current_y), line, fill='black', font=font_medium)
-#         current_y += 24
-    
-#     current_y += 15
-    
+#     
 #     # Barcode drawing
 #     barcode_height = 100
 #     module_width = 3 if not use_ean13 else 5
