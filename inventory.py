@@ -108,6 +108,39 @@ def create_tiny_aztec_label(uuid):
     return filename
 
 
+def composite_continuous(source_file, tape_width_px):
+    source_img = Image.open(source_file, 'r')
+    source_w, source_h = source_img.size
+    image = Image.new('1', (tape_width_px, source_h), color='white')
+    draw = ImageDraw.Draw(image)
+    
+    # we want at least 30px for the gap between each.
+    # tape >= source*n + 30*(n-1)
+    n = 1
+    while source_w*(n+1) + 30*(n) <= tape_width_px:
+        n += 1
+    
+    gutter = (tape_width_px - (source_w*n)) // (n-1)
+    gutter_l = gutter // 2
+    gutter_r = gutter - gutter_l
+
+    x = 0
+    while n > 0:
+        image.paste(source_img, (x, 0))
+        x += source_w + gutter_l
+        if x < tape_width_px-source_w:
+            draw.line((x, 0, x, source_h))
+            x += gutter_r
+        n -= 1
+
+    bw = image.convert('1')
+    source_file_base = source_file.split('/')[-1]
+    filename = f"output/continuous_{source_file_base}"
+    bw.save(filename)
+    
+    return filename
+
+
 def print_label(filename):
     """Requires a CLI provided by brother-ql-inventree."""
     cmd = [
