@@ -55,11 +55,44 @@ def create_full_inventory_label(uuid, label='leuco.net'):
     return filename
 
 
-# def create_small_inventory_label(uuid)
+def create_small_aztec_label(uuid, label="leuco.net", size_px=200):
+    """Creates a square image with the Aztec UUID, with plaintext UUID and label bordering it on two sides."""
+    aztec_size = (9 * size_px) // 10
+    image = Image.new('1', (size_px, size_px), color='white')
+    draw = ImageDraw.Draw(image)
+    
+    aztec.generate(uuid, "aztec.png")
+    aztec_img = Image.open("aztec.png", 'r')
+    aztec_img = aztec_img.resize((aztec_size, aztec_size))
+    image.paste(aztec_img, (0, 0))
+    
+    font_size = size_px // 10
+    font_face = ImageFont.truetype("/home/spencer/Downloads/fonts/01_Range_Mono_Complete/01 Range Mono Complete/OTF/RangeMono-Medium.otf", font_size)
+    
+    # uuid below the aztec
+    draw.text((aztec_size//2, aztec_size), uuid, fill='black', font=font_face, anchor='ma')
+    
+    # label to the right, rotated
+    bbox = draw.textbbox((0, 0), label, font=font_face)
+    label_w = bbox[2] - bbox[0]
+    label_h = bbox[3] - bbox[1] + font_size // 2 # not sure why the bbox needs this extra room
+    label_img = Image.new('1', (label_w, label_h), color='white')
+    label_draw = ImageDraw.Draw(label_img)
+    label_draw.text((0, 0), label, fill='black', font=font_face)
+    label_img = label_img.rotate(90, expand=1)
+    image.paste(label_img, (aztec_size, (aztec_size - label_w) // 2))
+    
+    # tiny lodestone in the corner
+    lodestone_img = Image.open('lodestone_20.png', 'r')
+    image.paste(lodestone_img, (aztec_size, aztec_size))
+
+    bw = image.convert('1')
+    filename = f"output/inventory_small_{uuid}.png"
+    bw.save(filename)
+    
+    return filename
 
 
-def create_tiny_inventory_label(uuid):
-    """Creates an image of lots of copies of the tiniest aztec"""
     aztec.generate(uuid, "aztec.png")
     aztec_img = Image.open("aztec.png", 'r')
     aztec_w, aztec_h = aztec_img.size
