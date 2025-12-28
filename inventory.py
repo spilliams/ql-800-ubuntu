@@ -93,14 +93,13 @@ def create_small_aztec_label(uuid, label="leuco.net", size_px=200):
     return filename
 
 
+def create_tiny_aztec_label(uuid):
+    """Creates an image of an aztec label, as small as possible"""
     aztec.generate(uuid, "aztec.png")
     aztec_img = Image.open("aztec.png", 'r')
     aztec_w, aztec_h = aztec_img.size
-    image = Image.new('RGB', (tape_width_px, aztec_h), color='white')
-    x = aztec_w
-    while x < tape_width_px:
-        image.paste(aztec_img, (x-aztec_w, 0))
-        x += aztec_w + 10
+    image = Image.new('1', (aztec_w, aztec_h), color='white')
+    image.paste(aztec_img, (0, 0))
 
     bw = image.convert('1')
     filename = f"output/inventory_tiny_{uuid}.png"
