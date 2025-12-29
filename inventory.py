@@ -93,7 +93,10 @@ def create_small_aztec_label(uuid, label="leuco.net", size_px=200):
     image.paste(label_img, (aztec_size, (aztec_size - label_w) // 2))
     
     # tiny lodestone in the corner
-    lodestone_img = Image.open('lodestone_20.png', 'r')
+    lodestone_img = Image.open('lodestone_160.png', 'r')
+    lodestone_img = lodestone_img.convert('1')
+    lodestone_size = size_px - aztec_size
+    lodestone_img = lodestone_img.resize((lodestone_size, lodestone_size))
     image.paste(lodestone_img, (aztec_size, aztec_size))
 
     bw = image.convert('1')
