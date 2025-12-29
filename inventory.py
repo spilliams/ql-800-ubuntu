@@ -5,6 +5,19 @@ import sys
 
 import aztec
 
+def create_aztec_label(format, uuid, label='leuco.net', size_px=200):
+    match format:
+        case 'full':
+            return create_full_aztec_label(uuid, label, size_px)
+        case 'small':
+            return create_small_aztec_label(uuid, label, size_px)
+        case 'tiny':
+            return create_tiny_aztec_label(uuid)
+        case _:
+            print(f"Label format '{format}' not recognized", file=sys.stderr)
+            sys.exit(1)
+
+
 def create_full_aztec_label(uuid, label='leuco.net', size_px=300):
     """Returns an image with the lodestone symbol, some text, and an aztec code of the UUID."""
     height_px = size_px // 4
