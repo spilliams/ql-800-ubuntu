@@ -234,30 +234,26 @@ def escape_for_filename(value):
 
 
 def main():
-    try:
-        if len(sys.argv) < 2:
-            print("Usage: python3 inventory.py UUID", file=sys.stderr)
-            sys.exit(1)
-        
-        uuid = sys.argv[1]
-        if uuid and not all(c.isalnum() for c in uuid):
-            print("Error: UUID must contain only letters and digits", file=sys.stderr)
-            sys.exit(1)
-        
-        filename = create_tiny_inventory_label(uuid)
-        print(f"saved label as {filename}")
-        
-        success, message = print_label(filename)
-        if success:
-            print(f"✓ {message}")
-            sys.exit(0)
-        else:
-            print(f"✗ {message}", file=sys.stderr)
-            sys.exit(1)
-            
-    except Exception as e:
-        print(f"Error: {str(e)}", file=sys.stderr)
+    if len(sys.argv) < 2:
+        print("Usage: python3 inventory.py UUID", file=sys.stderr)
         sys.exit(1)
+    
+    uuid = sys.argv[1]
+    if uuid and not all(c.isalnum() for c in uuid):
+        print("Error: UUID must contain only letters and digits", file=sys.stderr)
+        sys.exit(1)
+    
+    filename = create_tiny_inventory_label(uuid)
+    print(f"saved label as {filename}")
+    
+    success, message = print_label(filename)
+    if success:
+        print(f"✓ {message}")
+        sys.exit(0)
+    else:
+        print(f"✗ {message}", file=sys.stderr)
+        sys.exit(1)
+    
 
 
 if __name__ == "__main__":
