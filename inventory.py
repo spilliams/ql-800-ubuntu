@@ -5,28 +5,25 @@ import sys
 
 import aztec
 
-tape_designation = '62'
-tape_width_px = 696 # see https://github.com/matmair/brother_ql-inventree
-
-def create_full_inventory_label(uuid, label='leuco.net'):
-    """Creates an image with the lodestone symbol, some text, and an aztec code of the UUID."""
-    height_px = 164
-    image = Image.new('RGB', (tape_width_px, height_px), color='white')
+def create_full_aztec_label(uuid, label='leuco.net', size_px=300):
+    """Returns an image with the lodestone symbol, some text, and an aztec code of the UUID."""
+    height_px = size_px // 4
+    image = Image.new('1', (size_px, height_px), color='white')
     draw = ImageDraw.Draw(image)
 
     # lodestone image on the left
     lodestone_img = Image.open('lodestone_160.png', 'r')
+    lodestone_img = lodestone_img.convert('1')
+    lodestone_img = lodestone_img.resize((height_px, height_px))
     lodestone_w, lodestone_h = lodestone_img.size
-    lodestone_margin = (height_px - lodestone_h) // 2
-    image.paste(lodestone_img, (lodestone_margin, lodestone_margin))
-    lodestone_img.close()
+    image.paste(lodestone_img, (0, 0))
 
     # text in the middle
-    font_size = 50
+    font_size = (0.3 * height_px) // 1
     font_face = ImageFont.truetype("/home/spencer/Downloads/fonts/01_Range_Mono_Complete/01 Range Mono Complete/OTF/RangeMono-Medium.otf", font_size)
     text = f"{label}\n{uuid}"
-    y_centered = height_px // 2 + 2
-    x_centered = tape_width_px // 2
+    y_centered = height_px // 2
+    x_centered = size_px // 2
     draw.multiline_text(
         (x_centered, y_centered),
         text,
@@ -45,7 +42,7 @@ def create_full_inventory_label(uuid, label='leuco.net'):
     aztec_w, aztec_h = aztec_img.size
     print(f"aztec w {aztec_w}, h {aztec_h}, size {aztec_size}")
     aztec_margin = (height_px - aztec_h) // 2
-    aztec_x = tape_width_px - 2*aztec_margin - aztec_w
+    aztec_x = size_px - 2*aztec_margin - aztec_w
     image.paste(aztec_img, (aztec_x, aztec_margin))
     
     bw = image.convert('1')
