@@ -2,6 +2,8 @@
 import subprocess
 from PIL import Image, ImageDraw, ImageFont
 import sys
+import unicodedata
+import re
 
 import aztec
 
@@ -222,6 +224,13 @@ def label_size_px(designation):
     except KeyError:
         print(f"Error: tape designation '{designation}' not recognized.")
         sys.exit(1)
+
+
+def escape_for_filename(value):
+    text = str(value)
+    text = unicodedata.normalize('NFKD', text).encode('ascii', 'ignore').decode('ascii')
+    text = re.sub(r'[^\w\s-]', '', text.lower())
+    return re.sub(r'[-\s]+', '-', text).strip('-_')
 
 
 def main():
