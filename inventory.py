@@ -60,11 +60,7 @@ def create_full_aztec_label(uuid, label='leuco.net', size_px=300):
     aztec_x = size_px - 2*aztec_margin - aztec_w
     image.paste(aztec_img, (aztec_x, aztec_margin))
     
-    bw = image.convert('1')
-    filename = f"output/inventory_full_{uuid}.png"
-    bw.save(filename)
-    
-    return filename
+    return image.convert('1')
 
 
 def create_small_aztec_label(uuid, label="leuco.net", size_px=200):
@@ -101,11 +97,7 @@ def create_small_aztec_label(uuid, label="leuco.net", size_px=200):
     lodestone_img = lodestone_img.resize((lodestone_size, lodestone_size))
     image.paste(lodestone_img, (aztec_size, aztec_size))
 
-    bw = image.convert('1')
-    filename = f"output/inventory_small_{uuid}.png"
-    bw.save(filename)
-    
-    return filename
+    return image.convert('1')
 
 
 def create_tiny_aztec_label(uuid):
@@ -116,11 +108,7 @@ def create_tiny_aztec_label(uuid):
     image = Image.new('1', (aztec_w, aztec_h), color='white')
     image.paste(aztec_img, (0, 0))
 
-    bw = image.convert('1')
-    filename = f"output/inventory_tiny_{uuid}.png"
-    bw.save(filename)
-    
-    return filename
+    return image.convert('1')
 
 
 def composite_continuous(source_img, tape_width_px, n=0):
@@ -157,12 +145,8 @@ def composite_continuous(source_img, tape_width_px, n=0):
             x += gutter_r
         n -= 1
 
-    bw = image.convert('1')
-    source_file_base = source_file.split('/')[-1]
-    filename = f"output/continuous_{source_file_base}"
-    bw.save(filename)
-    
-    return filename
+    return image.convert('1')
+
 
 def print_label(filename, tape_designation):
     """Requires a CLI provided by brother-ql-inventree."""
