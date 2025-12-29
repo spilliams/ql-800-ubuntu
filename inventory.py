@@ -162,14 +162,16 @@ def composite_continuous(source_img, tape_width_px, n=0):
     
     return filename
 
-
-def print_label(filename):
+def print_label(filename, tape_designation):
     """Requires a CLI provided by brother-ql-inventree."""
     cmd = [
-        'brother_ql', '--backend', 'pyusb',
-        '--model', 'QL-800',
+        'brother_ql',
+        '--backend', 'pyusb',
         '--printer', 'usb://0x04f9:0x209b',
-        'print', '-l', f'{tape_designation}', filename
+        '--model', 'QL-800',
+        'print',
+        '--label', f'{tape_designation}',
+        filename
     ]
     
     result = subprocess.run(cmd, capture_output=True, text=True)
