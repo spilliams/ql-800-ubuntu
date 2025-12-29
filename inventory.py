@@ -121,19 +121,28 @@ def create_tiny_aztec_label(uuid):
     return filename
 
 
-def composite_continuous(source_file, tape_width_px):
-    source_img = Image.open(source_file, 'r')
+def composite_continuous(source_img, tape_width_px, n=0):
+    """Fills the tape width with as many copies of the source image as will fit. If n is provided and >0, uses that many copies instead of fitting to width."""
+    # we want at least 30px for the gap between each.
+    if n > 0:
+        total_gutter = (n-1) * 30
+        scaled_image_w = (tape_width_px - total_gutter) / n
+        image_w, image_h = source_img.size
+        scaled_image_h = scaled_image_w / image_w * image_h
+        source_img = source_img.resize((int(scaled_image_w), int(scaled_image_h)))
+    else:
+        # tape >= source*n + 30*(n-1)
+        n = 1
+        source_w, _ = source_img.size
+        while source_w*(n+1) + 30*(n) <= tape_width_px:
+            n += 1
+
     source_w, source_h = source_img.size
     image = Image.new('1', (tape_width_px, source_h), color='white')
     draw = ImageDraw.Draw(image)
-    
-    # we want at least 30px for the gap between each.
-    # tape >= source*n + 30*(n-1)
-    n = 1
-    while source_w*(n+1) + 30*(n) <= tape_width_px:
-        n += 1
-    
-    gutter = (tape_width_px - (source_w*n)) // (n-1)
+
+    divisor = n-1 if n>1 else 1
+    gutter = (tape_width_px - (source_w*n)) // divisor
     gutter_l = gutter // 2
     gutter_r = gutter - gutter_l
 
