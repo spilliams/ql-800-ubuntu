@@ -226,18 +226,31 @@ def main():
     if uuid and not all(c.isalnum() for c in uuid):
         print("Error: UUID must contain only letters and digits", file=sys.stderr)
         sys.exit(1)
+
+    tape_designation = '62'
+    tape_width_px, _ = label_size_px(tape_designation)
+
+    # TODO: use an arg to select the format (full, small, tiny)
+    # TODO: use an arg to select the symbology (aztec vs microqr)
+    format = 'tiny'
+    image = create_aztec_label('tiny', f"https://leuco.net/inv/{uuid}")
     
-    filename = create_tiny_inventory_label(uuid)
+    # TODO: use an arg to select the tape type
+    image_composite = composite_continuous(image, tape_width_px)
+    
+    filename = escape_for_filename(f"inventory_{format}_{uuid}")
+    filename = f"output/{filename}.png"
+    image_composite.save(filename)
     print(f"saved label as {filename}")
     
-    success, message = print_label(filename)
+    # TODO: use an arg to determine if we will print
+    success, message = print_label(filename, tape_designation)
     if success:
         print(f"✓ {message}")
         sys.exit(0)
     else:
         print(f"✗ {message}", file=sys.stderr)
         sys.exit(1)
-    
 
 
 if __name__ == "__main__":
