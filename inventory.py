@@ -33,7 +33,7 @@ def create_full_aztec_label(uuid, label='leuco.net', size_px=300):
 
     # text in the middle
     font_size = (0.3 * height_px) // 1
-    font_face = ImageFont.truetype("/home/spencer/Downloads/fonts/01_Range_Mono_Complete/01 Range Mono Complete/OTF/RangeMono-Medium.otf", font_size)
+    font_face = ImageFont.truetype("/home/spencer/Documents/fonts/01 Range Mono Complete/OTF/RangeMono-Medium.otf", font_size)
     text = f"{label}\n{uuid}"
     y_centered = height_px // 2
     x_centered = size_px // 2
@@ -161,8 +161,8 @@ def main():
 
     # TODO: use an arg to select the format (full, small, tiny)
     # TODO: use an arg to select the symbology (aztec vs microqr)
-    format = 'tiny'
-    image = create_aztec_label('tiny', f"https://leuco.net/inv/{uuid}")
+    format = 'full'
+    image = create_aztec_label(format, f"https://leuco.net/inv/{uuid}")
     
     # TODO: use an arg to select the tape type
     image_composite = composite_continuous(image, tape_width_px)
