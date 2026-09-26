@@ -41,12 +41,12 @@ def create_label(text, tape_width_px):
 
 def main():
     if len(sys.argv) != 1:
-        print("Usage: python3 text.py", file=sys.stderr)
-        sys.exit(1)
-
-    print("Enter text (blank line to end):")
-    sentinel = '' # ends when this string is seen
-    text = '\n'.join(iter(input, sentinel))
+        print("Args detected, printing as text")
+        text = '\n'.join(sys.argv[1:])
+    else:
+        print("Enter text (blank line to end):")
+        sentinel = '' # ends when this string is seen
+        text = '\n'.join(iter(input, sentinel))
     
     tape_designation = '62'
     tape_width_px, _ = ql800.label_size_px(tape_designation)
