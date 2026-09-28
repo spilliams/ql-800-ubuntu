@@ -5,7 +5,7 @@ import sys
 import aztec
 import ql800
 
-def create_aztec_label(format, uuid, label='leuco.net', size_px=200):
+def create_aztec_label(format, uuid, label='inventory', size_px=300):
     match format:
         case 'full':
             return create_full_aztec_label(uuid, label, size_px)
@@ -18,7 +18,7 @@ def create_aztec_label(format, uuid, label='leuco.net', size_px=200):
             sys.exit(1)
 
 
-def create_full_aztec_label(uuid, label='leuco.net', size_px=300):
+def create_full_aztec_label(uuid, label='inventory', size_px=300):
     """Returns an image with the lodestone symbol, some text, and an aztec code of the UUID."""
     height_px = size_px // 4
     image = Image.new('1', (size_px, height_px), color='white')
@@ -61,7 +61,7 @@ def create_full_aztec_label(uuid, label='leuco.net', size_px=300):
     return image.convert('1')
 
 
-def create_small_aztec_label(uuid, label="leuco.net", size_px=200):
+def create_small_aztec_label(uuid, label="inventory", size_px=200):
     """Creates a square image with the Aztec UUID, with plaintext UUID and label bordering it on two sides."""
     aztec_size = (9 * size_px) // 10
     image = Image.new('1', (size_px, size_px), color='white')
@@ -73,7 +73,7 @@ def create_small_aztec_label(uuid, label="leuco.net", size_px=200):
     image.paste(aztec_img, (0, 0))
     
     font_size = size_px // 10
-    font_face = ImageFont.truetype("/home/spencer/Downloads/fonts/01_Range_Mono_Complete/01 Range Mono Complete/OTF/RangeMono-Medium.otf", font_size)
+    font_face = ImageFont.truetype("/home/spencer/Documents/fonts/01 Range Mono Complete/OTF/RangeMono-Medium.otf", font_size)
     
     # uuid below the aztec
     draw.text((aztec_size//2, aztec_size), uuid, fill='black', font=font_face, anchor='ma')
@@ -162,7 +162,7 @@ def main():
     # TODO: use an arg to select the format (full, small, tiny)
     # TODO: use an arg to select the symbology (aztec vs microqr)
     format = 'full'
-    image = create_aztec_label(format, f"https://leuco.net/inv/{uuid}")
+    image = create_aztec_label(format, uuid, size_px=tape_width_px)
     
     # TODO: use an arg to select the tape type
     image_composite = composite_continuous(image, tape_width_px)

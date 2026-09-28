@@ -2,9 +2,7 @@
 
 This guide explains how to install and use the **Brother QL-800** label printer on Linux (tested on Ubuntu) using the `brother_ql_inventree` command-line tool (no CUPS required).
 
----
-
-## 1. Disable "Editor Lite" Mode
+## Disable "Editor Lite" Mode
 
 By default, the QL-800 can act as a USB drive instead of a printer (Editor Lite mode).
 
@@ -13,9 +11,7 @@ If the "Editor Lite" LED lights up:
 - **Hold the button** on the printer until the LED turns off.
 - This switches it to **printer mode** (real USB printer).
 
----
-
-## 2. Add a udev Rule for USB Permissions
+## Add a `udev` Rule for USB Permissions
 
 Create the file:
 
@@ -27,7 +23,7 @@ Insert the following rule:
 
 ```bash
 SUBSYSTEMS=="usb", ATTRS{idVendor}=="04f9", ATTRS{idProduct}=="209b", MODE="0666", GROUP="lp"
-````
+```
 
 Then reload rules:
 
@@ -38,9 +34,7 @@ sudo udevadm trigger
 
 Unplug and replug the printer.
 
----
-
-## 3. Install brother_ql via pipx
+## Install `brother_ql` via `pipx`
 
 ```bash
 sudo apt install pipx
@@ -51,9 +45,7 @@ If needed, add ~/.local/bin to your PATH
 
 You can use `pipx ensurepath` then restart your terminal
 
----
-
-## 4. Generate a Label Image (29x90 mm pre-cut)
+## Generate a Label Image (29x90 mm pre-cut)
 
 Example Python script using Pillow:
 
@@ -77,9 +69,7 @@ bw = image.convert('1')  # 1-bit black & white
 bw.save("label.png")
 ```
 
----
-
-## 5. Print the label
+## Print the label
 
 ```bash
 brother_ql --backend pyusb \
