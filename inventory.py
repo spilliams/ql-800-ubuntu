@@ -5,17 +5,24 @@ import sys
 import aztec
 import ql800
 
+FORMAT_FULL = 'full'
+FORMAT_SMALL = 'small'
+FORMAT_TINY = 'tiny'
+FORMAT_OPTIONS = [FORMAT_FULL, FORMAT_SMALL, FORMAT_TINY]
+
+def valid_format(format):
+    return format in FORMAT_OPTIONS
+
 def create_aztec_label(format, uuid, label='inventory', size_px=300):
-    match format:
-        case 'full':
-            return create_full_aztec_label(uuid, label, size_px)
-        case 'small':
-            return create_small_aztec_label(uuid, label, size_px)
-        case 'tiny':
-            return create_tiny_aztec_label(uuid)
-        case _:
-            print(f"Label format '{format}' not recognized", file=sys.stderr)
-            sys.exit(1)
+    if format == FORMAT_FULL:
+        return create_full_aztec_label(uuid, label, size_px)
+    if format == FORMAT_SMALL:
+        return create_small_aztec_label(uuid, label, size_px)
+    if format == FORMAT_TINY:
+        return create_tiny_aztec_label(uuid)
+
+    print(f"Label format '{format}' not recognized", file=sys.stderr)
+    sys.exit(1)
 
 
 def create_full_aztec_label(uuid, label='inventory', size_px=300):
@@ -147,11 +154,14 @@ def composite_continuous(source_img, tape_width_px, n=0):
 
 
 def main():
-    if len(sys.argv) < 2:
-        print("Usage: python3 inventory.py UUID", file=sys.stderr)
+    if len(sys.argv) < 2 or len(sys.argv) > 3:
+        print("Usage: python3 inventory.py [format] UUID", file=sys.stderr)
         sys.exit(1)
-    
-    uuid = sys.argv[1]
+
+    format = sys.argv[1] if len(sys.argv) > 2 else FORMAT_FULL
+
+    uuid = sys.argv[2] if len(sys.argv) > 2 else sys.argv[1]
+
     if uuid and not all(c.isalnum() for c in uuid):
         print("Error: UUID must contain only letters and digits", file=sys.stderr)
         sys.exit(1)
@@ -159,9 +169,7 @@ def main():
     tape_designation = '62'
     tape_width_px, _ = ql800.label_size_px(tape_designation)
 
-    # TODO: use an arg to select the format (full, small, tiny)
     # TODO: use an arg to select the symbology (aztec vs microqr)
-    format = 'full'
     image = create_aztec_label(format, uuid, size_px=tape_width_px)
     
     # TODO: use an arg to select the tape type
