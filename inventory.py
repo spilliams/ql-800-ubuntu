@@ -13,7 +13,7 @@ FORMAT_OPTIONS = [FORMAT_FULL, FORMAT_SMALL, FORMAT_TINY]
 def valid_format(format):
     return format in FORMAT_OPTIONS
 
-def create_aztec_label(format, uuid, label='inventory', size_px=300):
+def create_aztec_label(format, uuid, size_px, label='inventory'):
     if format == FORMAT_FULL:
         return create_full_aztec_label(uuid, label, size_px)
     if format == FORMAT_SMALL:
@@ -118,39 +118,47 @@ def create_tiny_aztec_label(uuid):
 
 def composite_continuous(source_img, tape_width_px, n=0):
     """Fills the tape width with as many copies of the source image as will fit. If n is provided and >0, uses that many copies instead of fitting to width."""
-    # we want at least 30px for the gap between each.
-    if n > 0:
-        total_gutter = (n-1) * 30
-        scaled_image_w = (tape_width_px - total_gutter) / n
-        image_w, image_h = source_img.size
-        scaled_image_h = scaled_image_w / image_w * image_h
-        source_img = source_img.resize((int(scaled_image_w), int(scaled_image_h)))
-    else:
-        # tape >= source*n + 30*(n-1)
-        n = 1
-        source_w, _ = source_img.size
-        while source_w*(n+1) + 30*(n) <= tape_width_px:
-            n += 1
 
+    # the printer adds margin. To make the image look square when cut out of the ribbon, we need padding.
+    margin_top_px = 30
+    margin_side_px = 15
+    padding_edge_px = margin_top_px - margin_side_px
+    padding_inner_px = margin_top_px
+    cut_line_px = 1
+
+    ideal_n = tape_width_px // (source_img.size[0]+2*padding_inner_px+cut_line_px)
+    if n > ideal_n:
+        print(f"Warning: requested n={n} causes image to scale down.", file=sys.stderr)
+    if n <= 0:
+        n = ideal_n
+
+    total_padding = 2*padding_edge_px + 2*(n-1)*padding_inner_px + (n-1)*cut_line_px
+
+    # set up the source image and canvas
+    image_w, image_h = source_img.size
+    print(f"source image size: {image_w}x{image_h}")
+    scaled_image_w = (tape_width_px - total_padding) / n
+    print(f"scaled image width: {scaled_image_w}, total padding: {total_padding}, tape width: {tape_width_px}, n: {n}")
+    scaled_image_h = scaled_image_w / image_w * image_h
+    if int(scaled_image_w) <= 0 or int(scaled_image_h) <= 0:
+        print(f"Scaled image size is too small: {scaled_image_w}x{scaled_image_h}", file=sys.stderr)
+        sys.exit(1)
+    source_img = source_img.resize((int(scaled_image_w), int(scaled_image_h)))
     source_w, source_h = source_img.size
-    image = Image.new('1', (tape_width_px, source_h), color='white')
-    draw = ImageDraw.Draw(image)
+    canvas = Image.new('1', (tape_width_px, source_h), color='white')
+    draw = ImageDraw.Draw(canvas)
 
-    divisor = n-1 if n>1 else 1
-    gutter = (tape_width_px - (source_w*n)) // divisor
-    gutter_l = gutter // 2
-    gutter_r = gutter - gutter_l
-
-    x = 0
+    x = padding_edge_px
     while n > 0:
-        image.paste(source_img, (x, 0))
-        x += source_w + gutter_l
-        if x < tape_width_px-source_w:
+        canvas.paste(source_img, (x, 0))
+        x += source_w + padding_inner_px
+        if x < tape_width_px:
             draw.line((x, 0, x, source_h))
-            x += gutter_r
+        if x < tape_width_px-source_w:
+            x += padding_inner_px
         n -= 1
 
-    return image.convert('1')
+    return canvas.convert('1')
 
 
 def main():
@@ -169,11 +177,15 @@ def main():
     tape_designation = '62'
     tape_width_px, _ = ql800.label_size_px(tape_designation)
 
+    # for tape62, and for the way the composite gutters/divides images:
+    n = {FORMAT_FULL: 1, FORMAT_SMALL: 3, FORMAT_TINY: 0}[format]
+    size_px = tape_width_px // (n if n > 0 else 1)
+
     # TODO: use an arg to select the symbology (aztec vs microqr)
-    image = create_aztec_label(format, uuid, size_px=tape_width_px)
-    
+    image = create_aztec_label(format, uuid, size_px)
+
     # TODO: use an arg to select the tape type
-    image_composite = composite_continuous(image, tape_width_px)
+    image_composite = composite_continuous(image, tape_width_px, n=n)
     
     filename = ql800.escape_for_filename(f"inventory_{format}_{uuid}")
     filename = f"output/{filename}.png"
