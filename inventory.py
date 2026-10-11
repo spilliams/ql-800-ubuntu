@@ -60,7 +60,6 @@ def create_full_aztec_label(uuid, label='inventory', size_px=300):
     aztec_img = Image.open("aztec.png", 'r')
     aztec_img = aztec_img.resize((aztec_size, aztec_size))
     aztec_w, aztec_h = aztec_img.size
-    print(f"aztec w {aztec_w}, h {aztec_h}, size {aztec_size}")
     aztec_margin = (height_px - aztec_h) // 2
     aztec_x = size_px - 2*aztec_margin - aztec_w
     image.paste(aztec_img, (aztec_x, aztec_margin))
@@ -116,9 +115,8 @@ def create_tiny_aztec_label(uuid):
     return image.convert('1')
 
 
-def composite_continuous(source_img, tape_width_px, n=0):
-    """Fills the tape width with as many copies of the source image as will fit. If n is provided and >0, uses that many copies instead of fitting to width."""
-
+def ideal_tape_n(width_px, total_px):
+    """Returns 4 values: ideal number of copies (based on given width), the edge padding to apply to first and last copy (static), the inner padding to apply to all copies (static), and the width of the cut-line to use between copies (static)."""
     # the printer adds margin. To make the image look square when cut out of the ribbon, we need padding.
     margin_top_px = 30
     margin_side_px = 15
@@ -126,24 +124,39 @@ def composite_continuous(source_img, tape_width_px, n=0):
     padding_inner_px = margin_top_px
     cut_line_px = 1
 
-    ideal_n = tape_width_px // (source_img.size[0]+2*padding_inner_px+cut_line_px)
+    ideal_n = total_px // (width_px+2*padding_inner_px+cut_line_px)
+    return (ideal_n, padding_edge_px, padding_inner_px, cut_line_px)
+
+
+def ideal_width(tape_width_px, n=0):
+    _, padding_edge_px, padding_inner_px, cut_line_px = ideal_tape_n(1, tape_width_px)
+
+    total_padding = 2*padding_edge_px + 2*(n-1)*padding_inner_px + (n-1)*cut_line_px
+    ideal_width_px = (tape_width_px - total_padding) // n
+    print(f"total padding: {total_padding}; ideal width: {ideal_width_px}")
+    return ideal_width_px
+
+def composite_continuous(source_img, tape_width_px, n=0):
+    """Fills the tape width with as many copies of the source image as will fit. If n is provided and >0, uses that many copies instead of fitting to width."""
+    print(f"tape width: {tape_width_px}, n: {n}")
+
+    ideal_n, padding_edge_px, padding_inner_px, cut_line_px = ideal_tape_n(source_img.size[0], tape_width_px)
     if n > ideal_n:
         print(f"Warning: requested n={n} causes image to scale down.", file=sys.stderr)
     if n <= 0:
         n = ideal_n
-
-    total_padding = 2*padding_edge_px + 2*(n-1)*padding_inner_px + (n-1)*cut_line_px
+    print(f"n: {n}")
 
     # set up the source image and canvas
     image_w, image_h = source_img.size
     print(f"source image size: {image_w}x{image_h}")
-    scaled_image_w = (tape_width_px - total_padding) / n
-    print(f"scaled image width: {scaled_image_w}, total padding: {total_padding}, tape width: {tape_width_px}, n: {n}")
-    scaled_image_h = scaled_image_w / image_w * image_h
+    scaled_image_w = ideal_width(tape_width_px, n)
+    scaled_image_h = int(scaled_image_w / image_w * image_h)
+    print(f"scaled image size: {scaled_image_w}x{scaled_image_h}")
     if int(scaled_image_w) <= 0 or int(scaled_image_h) <= 0:
         print(f"Scaled image size is too small: {scaled_image_w}x{scaled_image_h}", file=sys.stderr)
         sys.exit(1)
-    source_img = source_img.resize((int(scaled_image_w), int(scaled_image_h)))
+    source_img = source_img.resize((scaled_image_w, scaled_image_h))
     source_w, source_h = source_img.size
     canvas = Image.new('1', (tape_width_px, source_h), color='white')
     draw = ImageDraw.Draw(canvas)
@@ -153,7 +166,7 @@ def composite_continuous(source_img, tape_width_px, n=0):
         canvas.paste(source_img, (x, 0))
         x += source_w + padding_inner_px
         if x < tape_width_px:
-            draw.line((x, 0, x, source_h))
+            draw.line((x, 0, x, source_h), width=cut_line_px, fill='black')
         if x < tape_width_px-source_w:
             x += padding_inner_px
         n -= 1
@@ -179,7 +192,7 @@ def main():
 
     # for tape62, and for the way the composite gutters/divides images:
     n = {FORMAT_FULL: 1, FORMAT_SMALL: 3, FORMAT_TINY: 0}[format]
-    size_px = tape_width_px // (n if n > 0 else 1)
+    size_px = ideal_width(tape_width_px, (n if n > 0 else 1))
 
     # TODO: use an arg to select the symbology (aztec vs microqr)
     image = create_aztec_label(format, uuid, size_px)
